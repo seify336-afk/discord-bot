@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["ffmpeg", "nodejs"]
+nixPkgs = ["ffmpeg"]
 
 [phases.build]
-cmds = ["npm install -g deno || true"]
+cmds = ["ln -sf $(which ffmpeg) /usr/local/bin/ffmpeg || true"]
