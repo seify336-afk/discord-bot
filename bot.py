@@ -14,14 +14,9 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
-    import subprocess
-    try:
-        result = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True)
-        print(f"ffmpeg path: {result.stdout.strip() or 'NOT FOUND'}")
-        result2 = subprocess.run(["find", "/nix", "-name", "ffmpeg", "-type", "f"], capture_output=True, text=True)
-        print(f"ffmpeg in nix: {result2.stdout.strip() or 'NOT FOUND'}")
-    except Exception as e:
-        print(f"ffmpeg check error: {e}")
+    import os
+    cookie = os.getenv("COOKIE_DATA")
+    print(f"COOKIE_DATA set: {bool(cookie)}, length: {len(cookie) if cookie else 0}")
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.listening,
