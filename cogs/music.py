@@ -3,6 +3,9 @@ from discord.ext import commands
 import yt_dlp
 import asyncio
 from collections import deque
+import imageio_ffmpeg
+
+FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
 YTDL_OPTIONS = {
     "format": "bestaudio/best",
@@ -21,7 +24,7 @@ YTDL_OPTIONS = {
 }
 
 FFMPEG_OPTIONS = {
-    "executable": "ffmpeg",
+    "executable": FFMPEG_PATH,
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
     "options": "-vn -ar 48000",
 }
