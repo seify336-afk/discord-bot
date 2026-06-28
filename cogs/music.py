@@ -12,12 +12,10 @@ YTDL_OPTIONS = {
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
-    "cookiefile": "cookies.txt",
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
     "extract_flat": False,
-    "js_runtimes": {"deno": {"path": "/nix/var/nix/profiles/default/bin/deno"}},
     "postprocessors": [{
         "key": "FFmpegExtractAudio",
         "preferredcodec": "opus",
