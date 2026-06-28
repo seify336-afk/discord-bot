@@ -1,5 +1,2 @@
 [phases.setup]
-nixPkgs = ["ffmpeg"]
-
-[phases.build]
-cmds = ["ln -sf $(which ffmpeg) /usr/local/bin/ffmpeg || true"]
+nixPkgs = ["ffmpeg", "nodejs"]

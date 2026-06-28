@@ -13,6 +13,7 @@ YTDL_OPTIONS = {
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
+    "js_runtimes": "nodejs"
 }
 
 FFMPEG_OPTIONS = {
