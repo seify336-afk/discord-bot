@@ -5,7 +5,7 @@ import asyncio
 from collections import deque
 
 YTDL_OPTIONS = {
-    "format": "140/251/250/249/171/bestaudio",
+    "format": "bestaudio/best",
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
@@ -13,6 +13,7 @@ YTDL_OPTIONS = {
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
+    "extractor_args": {"youtube": {"player_client": ["web"]}},
 }
 
 FFMPEG_OPTIONS = {
