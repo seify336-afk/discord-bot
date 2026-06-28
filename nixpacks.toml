@@ -1,5 +1,5 @@
-[phases.setup] 
-nixPkgs = ["deno"] 
- 
-[phases.install] 
-cmds = ["pip install -r requirements.txt", "pip install -U yt-dlp"] 
+[phases.setup]
+nixPkgs = ["deno"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt", "pip install -U yt-dlp"]
