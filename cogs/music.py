@@ -9,7 +9,10 @@ YTDL_OPTIONS = {
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
-    "source_address": "cookies.txt",
+    "cookiefile": "cookies.txt",
+    "socket_timeout": 10,
+    "retries": 3,
+    "nocheckcertificate": True,
 }
 
 FFMPEG_OPTIONS = {
