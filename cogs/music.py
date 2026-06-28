@@ -4,8 +4,19 @@ import yt_dlp
 import asyncio
 from collections import deque
 import imageio_ffmpeg
+import os
+import tempfile
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+
+# Write cookies from env var to a temp file
+COOKIE_FILE = None
+cookie_data = os.getenv("COOKIE_DATA")
+if cookie_data:
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+    tmp.write(cookie_data)
+    tmp.close()
+    COOKIE_FILE = tmp.name
 
 YTDL_OPTIONS = {
     "format": "bestaudio/best",
@@ -21,6 +32,9 @@ YTDL_OPTIONS = {
         "preferredcodec": "opus",
     }],
 }
+
+if COOKIE_FILE:
+    YTDL_OPTIONS["cookiefile"] = COOKIE_FILE
 
 FFMPEG_OPTIONS = {
     "executable": FFMPEG_PATH,
@@ -90,6 +104,8 @@ class Music(commands.Cog):
                 embed.set_thumbnail(url=player.thumbnail)
             await ctx.send(embed=embed)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             await ctx.send(f"❌ Error playing track: `{e}`")
             await self.play_next(ctx)
 
