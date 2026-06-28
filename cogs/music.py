@@ -16,7 +16,7 @@ YTDL_OPTIONS = {
     "retries": 3,
     "nocheckcertificate": True,
     "extract_flat": False,
-    "js_runtimes": {"nodejs": {"path": "/usr/bin/node"}},
+    "js_runtimes": {"deno": {"path": "/nix/var/nix/profiles/default/bin/deno"}},
     "postprocessors": [{
         "key": "FFmpegExtractAudio",
         "preferredcodec": "opus",

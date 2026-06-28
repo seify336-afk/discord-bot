@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["ffmpeg", "nodejs"]
+nixPkgs = ["ffmpeg", "deno"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt", "pip install -U yt-dlp"]
-
-[variables]
-PATH = "/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin"
