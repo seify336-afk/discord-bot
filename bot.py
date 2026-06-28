@@ -14,9 +14,11 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
-    import os
+    import os, shutil
     cookie = os.getenv("COOKIE_DATA")
     print(f"COOKIE_DATA set: {bool(cookie)}, length: {len(cookie) if cookie else 0}")
+    deno = shutil.which("deno")
+    print(f"deno path: {deno or 'NOT FOUND'}")
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
     await bot.change_presence(activity=discord.Activity(
         type=discord.ActivityType.listening,

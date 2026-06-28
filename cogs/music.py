@@ -1,40 +1,11 @@
 import discord
 from discord.ext import commands
-import yt_dlp
 import asyncio
 from collections import deque
 import imageio_ffmpeg
-import os
-import tempfile
+import aiohttp
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-
-# Write cookies from env var to a temp file
-COOKIE_FILE = None
-cookie_data = os.getenv("COOKIE_DATA")
-if cookie_data:
-    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
-    tmp.write(cookie_data)
-    tmp.close()
-    COOKIE_FILE = tmp.name
-
-YTDL_OPTIONS = {
-    "format": "bestaudio/best",
-    "noplaylist": True,
-    "quiet": True,
-    "default_search": "ytsearch",
-    "socket_timeout": 10,
-    "retries": 3,
-    "nocheckcertificate": True,
-    "extract_flat": False,
-    "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "opus",
-    }],
-}
-
-if COOKIE_FILE:
-    YTDL_OPTIONS["cookiefile"] = COOKIE_FILE
 
 FFMPEG_OPTIONS = {
     "executable": FFMPEG_PATH,
@@ -42,28 +13,33 @@ FFMPEG_OPTIONS = {
     "options": "-vn -ar 48000",
 }
 
-ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
+PIPED_API = "https://pipedapi.kavin.rocks"
 
 
-class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-        self.data = data
-        self.title = data.get("title")
-        self.url = data.get("webpage_url")
-        self.duration = data.get("duration", 0)
-        self.thumbnail = data.get("thumbnail")
+async def search_piped(query):
+    async with aiohttp.ClientSession() as session:
+        if query.startswith("http"):
+            video_id = query.split("v=")[-1].split("&")[0]
+        else:
+            async with session.get(f"{PIPED_API}/search", params={"q": query, "filter": "videos"}) as r:
+                data = await r.json()
+                if not data.get("items"):
+                    return None
+                video_id = data["items"][0]["url"].split("?v=")[-1]
 
-    @classmethod
-    async def from_query(cls, query, *, loop=None, volume=0.5):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(
-            None, lambda: ytdl.extract_info(query, download=False)
-        )
-        if "entries" in data:
-            data = data["entries"][0]
-        filename = data["url"]
-        return cls(discord.FFmpegPCMAudio(filename, **FFMPEG_OPTIONS), data=data, volume=volume)
+        async with session.get(f"{PIPED_API}/streams/{video_id}") as r:
+            data = await r.json()
+            audio_streams = [s for s in data.get("audioStreams", []) if s.get("url")]
+            if not audio_streams:
+                return None
+            best = sorted(audio_streams, key=lambda x: x.get("bitrate", 0), reverse=True)[0]
+            return {
+                "url": best["url"],
+                "title": data.get("title", "Unknown"),
+                "duration": data.get("duration", 0),
+                "thumbnail": data.get("thumbnailUrl", ""),
+                "webpage_url": f"https://youtube.com/watch?v={video_id}",
+            }
 
 
 class Music(commands.Cog):
@@ -89,19 +65,27 @@ class Music(commands.Cog):
         query = queue.popleft()
         try:
             vol = self.volumes.get(ctx.guild.id, 0.5)
-            player = await YTDLSource.from_query(query, loop=self.bot.loop, volume=vol)
+            data = await search_piped(query)
+            if not data:
+                await ctx.send("❌ Could not find that song.")
+                await self.play_next(ctx)
+                return
+            source = discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(data["url"], **FFMPEG_OPTIONS),
+                volume=vol
+            )
             ctx.voice_client.play(
-                player,
+                source,
                 after=lambda e: asyncio.run_coroutine_threadsafe(self.play_next(ctx), self.bot.loop)
             )
             embed = discord.Embed(
                 title="🎵 Now Playing",
-                description=f"[{player.title}]({player.url})",
+                description=f"[{data['title']}]({data['webpage_url']})",
                 color=discord.Color.green()
             )
-            embed.add_field(name="Duration", value=self.format_duration(player.duration))
-            if player.thumbnail:
-                embed.set_thumbnail(url=player.thumbnail)
+            embed.add_field(name="Duration", value=self.format_duration(data["duration"]))
+            if data["thumbnail"]:
+                embed.set_thumbnail(url=data["thumbnail"])
             await ctx.send(embed=embed)
         except Exception as e:
             import traceback
@@ -126,12 +110,9 @@ class Music(commands.Cog):
         """Play a song from YouTube."""
         if not ctx.author.voice:
             return await ctx.send("❌ Join a voice channel first.")
-
         if not ctx.voice_client:
             await ctx.author.voice.channel.connect()
-
         queue = self.get_queue(ctx.guild.id)
-
         async with ctx.typing():
             if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
                 queue.append(query)
