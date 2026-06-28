@@ -12,6 +12,7 @@ YTDL_OPTIONS = {
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
+    "cookiefile": "cookies.txt",
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
