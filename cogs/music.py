@@ -13,7 +13,7 @@ YTDL_OPTIONS = {
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
-    "extractor_args": {"youtube": {"player_client": ["web"]}},
+    "extractor_args": {"youtube": {"player_client": ["tv_embedded"]}},
 }
 
 FFMPEG_OPTIONS = {
