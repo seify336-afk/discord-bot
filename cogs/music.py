@@ -13,7 +13,12 @@ FFMPEG_OPTIONS = {
     "options": "-vn -ar 48000",
 }
 
-PIPED_API = "https://pipedapi.kavin.rocks"
+PIPED_APIS = [
+    "https://piped-api.privacy.com.de",
+    "https://api.piped.yt",
+    "https://pipedapi.syncpundit.io",
+    "https://piped-api.cfe.re",
+]
 
 
 async def search_piped(query):
@@ -21,25 +26,38 @@ async def search_piped(query):
         if query.startswith("http"):
             video_id = query.split("v=")[-1].split("&")[0]
         else:
-            async with session.get(f"{PIPED_API}/search", params={"q": query, "filter": "videos"}) as r:
-                data = await r.json()
-                if not data.get("items"):
-                    return None
-                video_id = data["items"][0]["url"].split("?v=")[-1]
-
-        async with session.get(f"{PIPED_API}/streams/{video_id}") as r:
-            data = await r.json()
-            audio_streams = [s for s in data.get("audioStreams", []) if s.get("url")]
-            if not audio_streams:
+            video_id = None
+            for api in PIPED_APIS:
+                try:
+                    async with session.get(f"{api}/search", params={"q": query, "filter": "videos"}, timeout=aiohttp.ClientTimeout(total=8)) as r:
+                        if r.status == 200:
+                            data = await r.json(content_type=None)
+                            if data.get("items"):
+                                video_id = data["items"][0]["url"].split("?v=")[-1]
+                                break
+                except Exception:
+                    continue
+            if not video_id:
                 return None
-            best = sorted(audio_streams, key=lambda x: x.get("bitrate", 0), reverse=True)[0]
-            return {
-                "url": best["url"],
-                "title": data.get("title", "Unknown"),
-                "duration": data.get("duration", 0),
-                "thumbnail": data.get("thumbnailUrl", ""),
-                "webpage_url": f"https://youtube.com/watch?v={video_id}",
-            }
+
+        for api in PIPED_APIS:
+            try:
+                async with session.get(f"{api}/streams/{video_id}", timeout=aiohttp.ClientTimeout(total=8)) as r:
+                    if r.status == 200:
+                        data = await r.json(content_type=None)
+                        audio_streams = [s for s in data.get("audioStreams", []) if s.get("url")]
+                        if audio_streams:
+                            best = sorted(audio_streams, key=lambda x: x.get("bitrate", 0), reverse=True)[0]
+                            return {
+                                "url": best["url"],
+                                "title": data.get("title", "Unknown"),
+                                "duration": data.get("duration", 0),
+                                "thumbnail": data.get("thumbnailUrl", ""),
+                                "webpage_url": f"https://youtube.com/watch?v={video_id}",
+                            }
+            except Exception:
+                continue
+        return None
 
 
 class Music(commands.Cog):
