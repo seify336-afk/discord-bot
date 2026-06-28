@@ -5,7 +5,7 @@ import asyncio
 from collections import deque
 
 YTDL_OPTIONS = {
-    "format": "bestaudio*",
+    "format": "140/251/250/249/171/bestaudio",
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
