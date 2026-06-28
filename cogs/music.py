@@ -5,7 +5,7 @@ import asyncio
 from collections import deque
 
 YTDL_OPTIONS = {
-    "format": "251/249/140/139",
+    "format": "bestaudio/best",
     "noplaylist": True,
     "quiet": True,
     "default_search": "ytsearch",
@@ -13,12 +13,16 @@ YTDL_OPTIONS = {
     "socket_timeout": 10,
     "retries": 3,
     "nocheckcertificate": True,
-    "js_runtimes": "nodejs"
+    "extract_flat": False,
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "opus",
+    }],
 }
 
 FFMPEG_OPTIONS = {
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-    "options": "-vn",
+    "options": "-vn -ar 48000",
 }
 
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTIONS)
